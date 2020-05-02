@@ -21,8 +21,8 @@ import java.util.Date;
 import java.util.ListIterator;
 
 public class RecyclerView3Activity extends AppCompatActivity {
-    public static final int REQUEST_CREATE = 0;
-    public static final int REQUEST_EDIT = 1;
+    private static final int REQUEST_CREATE = 0;
+    private static final int REQUEST_EDIT = 1;
 
     int memoIndex;
     RecyclerView3Adapter recyclerView3Adapter;
@@ -37,7 +37,13 @@ public class RecyclerView3Activity extends AppCompatActivity {
         arrayList.add(new Memo("one", new Date()));
         arrayList.add(new Memo("two", new Date()));
 
-        recyclerView3Adapter = new RecyclerView3Adapter(this, arrayList);
+        recyclerView3Adapter = new RecyclerView3Adapter(this, arrayList, new OnMemoClickListener() {
+            @Override
+            public void onMemoClicked(int index) {
+                memoIndex = index;
+                startMemoActivityForResult(REQUEST_EDIT, arrayList.get(index));
+            }
+        });
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -56,8 +62,7 @@ public class RecyclerView3Activity extends AppCompatActivity {
     @Override public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_create) {
-            Intent intent = new Intent(this, MemoActivity.class);
-            startActivityForResult(intent, REQUEST_CREATE);
+            startMemoActivityForResult(REQUEST_CREATE, null);
             return true;
         } else if (id == R.id.action_remove) {
             deleteItems();
@@ -96,5 +101,11 @@ public class RecyclerView3Activity extends AppCompatActivity {
         builder.setNegativeButton(R.string.no, null);
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private void startMemoActivityForResult(int requestCode, Memo memo) {
+        Intent intent = new Intent(this, MemoActivity.class);
+        intent.putExtra("MEMO", memo);
+        startActivityForResult(intent, requestCode);
     }
 }
