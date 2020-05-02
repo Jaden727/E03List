@@ -75,7 +75,8 @@ public class RecyclerView3Activity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         if (resultCode == RESULT_OK) {
-            Memo memo = (Memo)intent.getSerializableExtra("MEMO");
+            Bundle bundle = intent.getExtras();
+            Memo memo = (Memo)bundle.getSerializable("MEMO");
             if (requestCode == REQUEST_CREATE)
                 arrayList.add(memo);
             else if (requestCode == REQUEST_EDIT)
