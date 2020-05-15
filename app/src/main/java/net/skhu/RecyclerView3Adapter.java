@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.ListIterator;
 
 public class RecyclerView3Adapter extends RecyclerView.Adapter<RecyclerView3Adapter.ViewHolder> {
 
@@ -39,8 +40,8 @@ public class RecyclerView3Adapter extends RecyclerView.Adapter<RecyclerView3Adap
 
         @Override
         public void onClick(View view) {
-            int index = super.getAdapterPosition();
-            listener.onMemoClicked(index);
+            selectedIndex = super.getAdapterPosition();
+            onMemoClickListener.onMemoClicked(arrayList.get(selectedIndex));
         }
 
         @Override
@@ -49,22 +50,23 @@ public class RecyclerView3Adapter extends RecyclerView.Adapter<RecyclerView3Adap
             memo.setChecked(isChecked);
             if (isChecked) ++checkedCount;
             else --checkedCount;
-            if (isChecked && checkedCount == 1 || !isChecked && checkedCount == 0) {
-                Activity activity = (Activity) textView1.getContext();
-                activity.invalidateOptionsMenu();
-            }
+            onCheckCountChangeListener.onCheckCountChanged(checkedCount);
         }
     }
 
     LayoutInflater layoutInflater;
     ArrayList<Memo> arrayList;
     int checkedCount = 0;
-    OnMemoClickListener listener;
+    int selectedIndex;
+    OnMemoClickListener onMemoClickListener;
+    OnCheckCountChangeListener onCheckCountChangeListener;
 
-    public RecyclerView3Adapter(Context context, ArrayList<Memo> arrayList, OnMemoClickListener listener) {
+    public RecyclerView3Adapter(Context context, OnMemoClickListener onMemoClickListener,
+                                OnCheckCountChangeListener onCheckCountChangeListener) {
         this.layoutInflater = LayoutInflater.from(context);
-        this.arrayList = arrayList;
-        this.listener = listener;
+        this.arrayList = new ArrayList<Memo>();
+        this.onMemoClickListener = onMemoClickListener;
+        this.onCheckCountChangeListener = onCheckCountChangeListener;
     }
 
     @Override
@@ -82,5 +84,23 @@ public class RecyclerView3Adapter extends RecyclerView.Adapter<RecyclerView3Adap
     public void onBindViewHolder(final ViewHolder viewHolder, final int index) {
         viewHolder.setData();
     }
-}
 
+    public void add(Memo memo) {
+        arrayList.add(memo);
+        notifyItemInserted(arrayList.size() - 1);
+    }
+
+    public void update(Memo memo) {
+        arrayList.set(selectedIndex, memo);
+        notifyItemChanged(selectedIndex);
+    }
+
+    public void removeCheckedMemo() {
+        ListIterator<Memo> iterator = arrayList.listIterator();
+        while (iterator.hasNext())
+            if (iterator.next().isChecked())
+                iterator.remove();
+        onCheckCountChangeListener.onCheckCountChanged(checkedCount = 0);
+        notifyDataSetChanged();
+    }
+}

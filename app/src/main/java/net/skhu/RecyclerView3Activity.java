@@ -24,26 +24,16 @@ public class RecyclerView3Activity extends AppCompatActivity {
     private static final int REQUEST_CREATE = 0;
     private static final int REQUEST_EDIT = 1;
 
-    int memoIndex;
     RecyclerView3Adapter recyclerView3Adapter;
-    ArrayList<Memo> arrayList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recycler_view3);
 
-        arrayList = new ArrayList<Memo>();
-        arrayList.add(new Memo("one", new Date()));
-        arrayList.add(new Memo("two", new Date()));
-
-        recyclerView3Adapter = new RecyclerView3Adapter(this, arrayList, new OnMemoClickListener() {
-            @Override
-            public void onMemoClicked(int index) {
-                memoIndex = index;
-                startMemoActivityForResult(REQUEST_EDIT, arrayList.get(index));
-            }
-        });
+        recyclerView3Adapter = new RecyclerView3Adapter(this,
+                (memo) -> startMemoActivityForResult(REQUEST_EDIT, memo),
+                (count) -> { if (count <= 1) invalidateOptionsMenu(); });
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -65,7 +55,13 @@ public class RecyclerView3Activity extends AppCompatActivity {
             startMemoActivityForResult(REQUEST_CREATE, null);
             return true;
         } else if (id == R.id.action_remove) {
-            deleteItems();
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.confirm);
+            builder.setMessage(R.string.doYouWantToDelete);
+            builder.setPositiveButton(R.string.yes, (dialog, index) -> recyclerView3Adapter.removeCheckedMemo());
+            builder.setNegativeButton(R.string.no, null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -75,33 +71,12 @@ public class RecyclerView3Activity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         if (resultCode == RESULT_OK) {
-            Bundle bundle = intent.getExtras();
-            Memo memo = (Memo)bundle.getSerializable("MEMO");
+            Memo memo = (Memo)intent.getSerializableExtra("MEMO");
             if (requestCode == REQUEST_CREATE)
-                arrayList.add(memo);
+                recyclerView3Adapter.add(memo);
             else if (requestCode == REQUEST_EDIT)
-                arrayList.set(memoIndex, memo);
-            recyclerView3Adapter.notifyDataSetChanged();
+                recyclerView3Adapter.update(memo);
         }
-    }
-
-    private void deleteItems() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.confirm);
-        builder.setMessage(R.string.doYouWantToDelete);
-        builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int index) {
-                ListIterator<Memo> iterator = arrayList.listIterator();
-                while (iterator.hasNext())
-                    if (iterator.next().isChecked())
-                        iterator.remove();
-                recyclerView3Adapter.notifyDataSetChanged();
-            }
-        });
-        builder.setNegativeButton(R.string.no, null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     private void startMemoActivityForResult(int requestCode, Memo memo) {
